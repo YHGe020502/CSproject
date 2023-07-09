@@ -1,0 +1,32 @@
+Yonghan Ge YOGE 1266723
+1. Should the server accept calls from everyone, or just a subset of users?
+It should accept from just a subset of users, because only a subset of users is more safe. It can avoid handle invalid data with unknown users.
+
+2. Should authentication etc. be provided by the RPC framework, or by the functions that use the RPC framework?
+It should be provided by the functions that use the RPC framework to achieve the security of the system. And also easy to implement.
+
+3. What transport layer protocol should be used? What are the trade-offs?
+TCP should be used, because it is more reliable than UDP.
+Although TCP is more reliable, it is slower than UDP. TCP need extra time to establish a connection, and it also need to check the data to make sure it is correct. Therfore, it's slower than UDP.
+
+4. In which function(s) should the socket(s) be created?
+in function rpc_init_server and rpc_init_client
+
+5. Should rpc_client and rpc_server be allocated dynamically or statically? What are the implications
+for the client and server code?
+They should be allocated dynamically, because we will use then in other functions and we don't know how many clients and servers will be created. If we create them on stack, after the function return, the memory will be released, and the client and server will be destroyed. When we want to use them in other functions, they are not exist. If we store then on global, it will waste memory.
+
+6. What happens if one host uses big-endian byte order and the other uses little-endian? How does that relate
+to "network byte order"?
+It will get wrong data. Because the data is stored in different order. For example, if the data is 0x12340000, in big-endian, it will be stored as 0x12 0x34 0x00 0x00, but in little-endian, stored as 0x00 0x00 0x34 0x12.
+Network byte order is a standard byte order, it is big-endian order. It specifies the order transmitted on the network. So the host should convert the data to network byte order before send it to the network, and convert it to host byte order after receive it from the network.
+
+protocol for my RPC system:
+rpc_find: send length of name, send operation type(OPERATION_FIND), send name, receive handle_id
+rpc_call: send length of data2, send operation type(OPERATION_CALL), send handle_id, send data1, data1 is 64bits, send data2. receive length of data2, if length == -1, return NULL. receive data1 and data2.
+rpc_close: send length zero, send operation type(OPERATION_CLOSE).
+
+rpc_serve_all: receive length and operation type.
+if type is OPERATION_FIND, receive name, find the function, send handle_id.
+if type is OPERATION_CALL, receive handle_id, receive data1, receive data2, call the function, send length of data2, send data1 and data2. if data is not valid, only send length -1
+if type is OPERATION_CLOSE, close the connection.
